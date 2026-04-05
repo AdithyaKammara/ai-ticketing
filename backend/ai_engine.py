@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv('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'))
+client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 
 ANALYSIS_PROMPT = """
 You are a smart ticketing AI. Analyze the support ticket below.
