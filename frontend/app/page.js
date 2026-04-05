@@ -39,22 +39,22 @@ export default function Home() {
           <div className="bg-white rounded-xl shadow p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-              <input className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 value={form.submitter_name} onChange={e => setForm({ ...form, submitter_name: e.target.value })} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
-              <input type="email" className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input type="email" className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 value={form.submitter_email} onChange={e => setForm({ ...form, submitter_email: e.target.value })} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Title</label>
-              <input className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea rows={5} className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <textarea rows={5} className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -72,7 +72,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Category</p>
-                <p className="font-semibold">{result.category}</p>
+                <p className="font-semibold text-gray-900">{result.category}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Severity</p>
@@ -82,11 +82,11 @@ export default function Home() {
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Sentiment</p>
-                <p className="font-semibold">{result.sentiment}</p>
+                <p className="font-semibold text-gray-900">{result.sentiment}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Status</p>
-                <p className="font-semibold">{result.status}</p>
+                <p className="font-semibold text-gray-900">{result.status}</p>
               </div>
             </div>
             {result.status === 'Auto-Resolved' && result.auto_response && (
@@ -102,7 +102,7 @@ export default function Home() {
             )}
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-xs text-gray-500">AI Summary</p>
-              <p className="text-sm mt-1">{result.ai_summary}</p>
+              <p className="text-sm mt-1 text-gray-900">{result.ai_summary}</p>
             </div>
             <button onClick={() => { setResult(null); setForm({ submitter_name: '', submitter_email: '', title: '', description: '' }); }}
               className="w-full border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50">
