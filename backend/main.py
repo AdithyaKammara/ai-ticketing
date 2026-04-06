@@ -263,3 +263,8 @@ def build_employee_response(emp: Employee):
         "availability": emp.availability,
         "active": emp.active
     }
+@app.post("/seed")
+def seed_employees(db: Session = Depends(get_db)):
+    from seed_data import seed
+    seed()
+    return {"message": "Seeded successfully"}
