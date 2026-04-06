@@ -55,7 +55,7 @@ export default function Employees() {
       </div>
 
       <div className="px-6 py-4">
-        <select className="border rounded-lg px-3 py-2 text-sm bg-white"
+        <select className="border rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
           value={filterDept} onChange={e => setFilterDept(e.target.value)}>
           <option value="">All Departments</option>
           {['Engineering', 'IT', 'Finance', 'HR', 'DevOps', 'Product'].map(d => (
