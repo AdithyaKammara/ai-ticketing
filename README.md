@@ -2,7 +2,7 @@
 
 Internal support tickets, triaged by an LLM in seconds and routed to the right agent, with deterministic guardrails deciding what the model may auto-resolve.
 
-> **Status: rebuild in progress (v2).** Milestone M0 (foundations) is done. See [the PRD](docs/PRD.pdf) for the full specification and the [milestone notes](docs/milestones/).
+> **Status: rebuild in progress (v2).** M0 (foundations) and M1 (backend core) are done; AI triage (M2) is next. See [the PRD](docs/PRD.pdf) for the full specification and the [milestone notes](docs/milestones/).
 
 ## Stack
 
@@ -23,7 +23,23 @@ cp .env.example .env   # then set JWT_SECRET (32+ characters)
 docker compose up --build
 ```
 
+Migrations run automatically before the API starts. Load the demo data once:
+
+```bash
+docker compose run --rm api python -m app.seed
+```
+
 The web app is at http://localhost:8080, the API at http://localhost:8000 and its docs at http://localhost:8000/docs.
+
+### Demo accounts
+
+All use the password `ticketing-demo`.
+
+| Role      | Email                     | Sees                                    |
+| --------- | ------------------------- | --------------------------------------- |
+| Requester | `requester@acme.example`  | Their own tickets                       |
+| Agent     | `agent@acme.example`      | Engineering tickets and their own queue |
+| Admin     | `admin@acme.example`      | Everything                              |
 
 ### Without Docker for the apps
 
@@ -31,7 +47,8 @@ Start only Postgres and Redis in Docker (or point `.env` at hosted ones), then r
 
 ```bash
 docker compose up -d postgres redis
-cd backend && uv sync && uv run uvicorn app.main:create_app --factory --reload
+cd backend && uv sync && uv run alembic upgrade head && uv run python -m app.seed
+uv run uvicorn app.main:create_app --factory --reload
 cd frontend && pnpm install && pnpm dev
 ```
 
@@ -39,7 +56,8 @@ The Vite dev server on http://localhost:5173 proxies `/api` to the API on port 8
 
 ## Checks
 
-These are the same commands CI runs.
+These are the same commands CI runs. Backend tests need the compose Postgres and Redis running
+(`docker compose up -d postgres redis`); they use their own `ticketing_test` database and Redis db 15.
 
 ```bash
 cd backend

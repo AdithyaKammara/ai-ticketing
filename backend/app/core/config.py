@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr = Field(min_length=32)
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
+    access_token_ttl_minutes: int = 15
+    refresh_token_ttl_days: int = 7
+    # Browsers treat localhost as secure, so Secure cookies work in local development too.
+    cookie_secure: bool = True
+    allow_registration: bool = True
+    login_max_failures: int = 5
+    login_lockout_seconds: int = 15 * 60
+    ticket_create_limit_per_hour: int = 10
+
     # Only the worker calls the LLM, so the API can start without a key.
     groq_api_key: SecretStr | None = None
     auto_resolve_min_confidence: int = Field(default=85, ge=0, le=100)

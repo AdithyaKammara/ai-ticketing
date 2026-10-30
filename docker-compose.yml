@@ -29,6 +29,17 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://ticketing:ticketing@postgres:5432/ticketing
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build: ./backend
     env_file: .env
@@ -38,8 +49,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:

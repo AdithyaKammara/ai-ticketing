@@ -1,15 +1,16 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+from arq.connections import ArqRedis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from redis.asyncio import Redis
 
 from app.api.v1 import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.logging import REQUEST_ID_HEADER, RequestContextMiddleware, configure_logging
-from app.db.session import create_engine
+from app.db.session import create_engine, create_sessionmaker
+from app.workers.queue import ArqTriageQueue
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,10 +19,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.settings = settings
         app.state.engine = create_engine(str(settings.database_url))
-        app.state.redis = Redis.from_url(
+        app.state.sessionmaker = create_sessionmaker(app.state.engine)
+        # ArqRedis is a redis.asyncio.Redis, so one connection pool serves rate limits,
+        # readiness checks and the job queue. Connections open lazily on first use.
+        app.state.redis = ArqRedis.from_url(
             str(settings.redis_url), socket_connect_timeout=2, socket_timeout=2
         )
+        app.state.triage_queue = ArqTriageQueue(app.state.redis)
         try:
             yield
         finally:
@@ -39,8 +45,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", REQUEST_ID_HEADER],
         expose_headers=[REQUEST_ID_HEADER],
     )
     app.add_middleware(RequestContextMiddleware)
