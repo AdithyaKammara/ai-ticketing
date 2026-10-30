@@ -428,10 +428,12 @@ async def add_comment(
     session: AsyncSession, actor: User, ticket_id: UUID, body: str, is_internal: bool
 ) -> TicketEvent:
     ticket = await get_visible(session, actor, ticket_id)
-    staff = actor.role in (Role.AGENT, Role.ADMIN)
-    if is_internal and not staff:
-        raise AppError(403, "FORBIDDEN", "Only agents can add internal notes")
-    if staff and ticket.requester_id != actor.id:
+    # Internal notes belong to whoever works the ticket. An agent who merely filed a ticket
+    # in another department is its requester there, and gets the requester's rights.
+    manages = can_manage(actor, ticket)
+    if is_internal and not manages:
+        raise AppError(403, "FORBIDDEN", "Only agents working this ticket can add internal notes")
+    if not manages and ticket.requester_id != actor.id:
         ensure_can_manage(actor, ticket)
     if ticket.status is TicketStatus.CLOSED:
         raise AppError(409, "TICKET_CLOSED", "This ticket is closed")
@@ -444,7 +446,7 @@ async def add_comment(
         body=body,
         is_internal=is_internal,
     )
-    if staff and not is_internal and ticket.first_responded_at is None:
+    if manages and not is_internal and ticket.first_responded_at is None:
         ticket.first_responded_at = utcnow()
     await session.commit()
     await session.refresh(event)
@@ -452,10 +454,11 @@ async def add_comment(
 
 
 async def list_events(session: AsyncSession, actor: User, ticket_id: UUID) -> list[TicketEvent]:
-    await get_visible(session, actor, ticket_id)
+    ticket = await get_visible(session, actor, ticket_id)
     query = select(TicketEvent).where(TicketEvent.ticket_id == ticket_id)
-    if actor.role is Role.REQUESTER:
-        # Internal notes never reach a requester, whatever the client asks for.
+    if not can_manage(actor, ticket):
+        # Internal notes never reach anyone who is not working the ticket, including an
+        # agent who is only its requester.
         query = query.where(TicketEvent.is_internal.is_(False))
     query = query.order_by(TicketEvent.created_at, TicketEvent.id)
     return list((await session.scalars(query)).unique())

@@ -15,7 +15,7 @@ from app.api.deps import (
 )
 from app.core.clock import utcnow
 from app.core.rate_limit import Limit
-from app.db.enums import Category, Role, Severity, TicketStatus
+from app.db.enums import Category, Severity, TicketStatus
 from app.db.models import Ticket, User
 from app.schemas.common import Page
 from app.schemas.tickets import (
@@ -72,7 +72,7 @@ async def detail_out(session: SessionDep, ticket: Ticket, viewer: User) -> Ticke
     out = TicketOut.model_validate(ticket)
     out.is_overdue = ticket_service.is_overdue(ticket, utcnow())
     out.feedback_given = await ticket_service.has_feedback(session, ticket.id)
-    if viewer.role is Role.REQUESTER:
+    if not ticket_service.can_manage(viewer, ticket):
         # Model confidence is an agent tool; requesters see the answer, not the score.
         out.ai_confidence = None
     return out

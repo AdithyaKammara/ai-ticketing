@@ -577,6 +577,39 @@ async def test_internal_notes_are_hidden_from_the_requester(
     assert len(as_agent.json()) == 2
 
 
+async def test_agent_filing_a_ticket_elsewhere_is_treated_as_its_requester(
+    client: AsyncClient, make: Factory, agent: User
+) -> None:
+    it = await make.department("it")
+    it_agent = await make.user(Role.AGENT, it)
+    ticket = await make.ticket(agent, department=it, assignee=it_agent, ai_confidence=80)
+    await client.post(
+        f"/api/v1/tickets/{ticket.id}/comments",
+        json={"body": "Ravi seems to have broken it himself", "is_internal": True},
+        headers=auth(it_agent),
+    )
+
+    events = await client.get(f"/api/v1/tickets/{ticket.id}/events", headers=auth(agent))
+    detail = await client.get(f"/api/v1/tickets/{ticket.id}", headers=auth(agent))
+    note = await client.post(
+        f"/api/v1/tickets/{ticket.id}/comments",
+        json={"body": "sneaky", "is_internal": True},
+        headers=auth(agent),
+    )
+    reply = await client.post(
+        f"/api/v1/tickets/{ticket.id}/comments",
+        json={"body": "Any update?"},
+        headers=auth(agent),
+    )
+    after = await client.get(f"/api/v1/tickets/{ticket.id}", headers=auth(agent))
+
+    assert events.json() == []
+    assert detail.json()["ai_confidence"] is None
+    assert note.status_code == 403
+    assert reply.status_code == 201
+    assert after.json()["first_responded_at"] is None  # a requester reply is not a response
+
+
 async def test_first_public_reply_sets_first_responded_at(
     client: AsyncClient, make: Factory, requester: User, agent: User, eng: Department
 ) -> None:
