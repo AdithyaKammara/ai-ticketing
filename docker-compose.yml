@@ -1,5 +1,5 @@
 # Local stack: `docker compose up --build`, then open http://localhost:8080
-# The triage worker joins in milestone M2.
+# The worker needs GROQ_API_KEY in .env; without it, it exits and tickets wait in TRIAGING.
 name: ai-ticketing
 
 services:
@@ -58,6 +58,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+
+  worker:
+    build: ./backend
+    command: ["arq", "app.workers.main.WorkerSettings"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://ticketing:ticketing@postgres:5432/ticketing
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: on-failure:3
 
   web:
     build: ./frontend

@@ -31,10 +31,14 @@ class Settings(BaseSettings):
     login_lockout_seconds: int = 15 * 60
     ticket_create_limit_per_hour: int = 10
 
-    # Only the worker calls the LLM, so the API can start without a key.
+    # Only the worker calls the LLM, so the API can start without a key; the worker cannot.
     groq_api_key: SecretStr | None = None
+    llm_model: str = "llama-3.3-70b-versatile"
     auto_resolve_min_confidence: int = Field(default=85, ge=0, le=100)
+    # Model calls per UTC day across all users; past it, tickets skip AI and go to a person.
     llm_daily_budget: int = Field(default=500, ge=0)
+    auto_close_after_days: int = 7
+    triage_log_retention_days: int = 90
 
     sentry_dsn: SecretStr | None = None
 

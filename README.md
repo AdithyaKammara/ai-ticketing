@@ -2,7 +2,7 @@
 
 Internal support tickets, triaged by an LLM in seconds and routed to the right agent, with deterministic guardrails deciding what the model may auto-resolve.
 
-> **Status: rebuild in progress (v2).** M0 (foundations) and M1 (backend core) are done; AI triage (M2) is next. See [the PRD](docs/PRD.pdf) for the full specification and the [milestone notes](docs/milestones/).
+> **Status: rebuild in progress (v2).** M0 (foundations), M1 (backend core) and M2 (AI triage) are built; the frontend (M3) is next. See [the PRD](docs/PRD.pdf) for the full specification and the [milestone notes](docs/milestones/).
 
 ## Stack
 
@@ -19,7 +19,7 @@ Internal support tickets, triaged by an LLM in seconds and routed to the right a
 You need Docker, or Python 3.12 with [uv](https://docs.astral.sh/uv/) and Node 22+ with pnpm.
 
 ```bash
-cp .env.example .env   # then set JWT_SECRET (32+ characters)
+cp .env.example .env   # then set JWT_SECRET (32+ characters) and GROQ_API_KEY
 docker compose up --build
 ```
 
@@ -49,6 +49,7 @@ Start only Postgres and Redis in Docker (or point `.env` at hosted ones), then r
 docker compose up -d postgres redis
 cd backend && uv sync && uv run alembic upgrade head && uv run python -m app.seed
 uv run uvicorn app.main:create_app --factory --reload
+uv run arq app.workers.main.WorkerSettings    # triage worker, in a second terminal
 cd frontend && pnpm install && pnpm dev
 ```
 
@@ -72,6 +73,30 @@ pnpm lint && pnpm format:check && pnpm typecheck
 pnpm test
 pnpm build
 ```
+
+## How triage works
+
+The API saves each ticket as `TRIAGING` and queues a job. The worker asks the model for a
+category, severity, summary, confidence and, for simple how-to questions, a draft answer.
+Plain code then decides what happens: the department comes from a fixed category map,
+severity can only be raised (database and infrastructure tickets are at least HIGH, and
+"production down" or "data loss" makes a ticket CRITICAL), and a ticket is answered
+automatically only when the model is confident, the issue is low risk, and the category is
+on the allow-list. Everything else goes to the best available agent. If the model fails, the
+ticket goes to a person. See [ADR 1](docs/adr/0001-worker-queue-for-triage.md) and
+[ADR 2](docs/adr/0002-guardrails-decide-not-the-model.md).
+
+### Evaluation
+
+`backend/evals/dataset.jsonl` holds 116 hand-labeled tickets, including 10 prompt-injection
+attempts and 10 vague tickets. To run them against the real model:
+
+```bash
+cd backend && uv run python -m app.evals.run --write
+```
+
+Targets: at least 90% category and department accuracy, and zero unsafe auto-resolutions.
+Results go to `docs/eval-results.md`. The first real run is still pending.
 
 ## Repository layout
 

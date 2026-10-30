@@ -1,0 +1,49 @@
+name: AI eval
+
+# Runs the labeled dataset against the real model. Nightly, on demand, and on any PR that
+# changes the prompt, the triage pipeline, the guardrails or the dataset.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - backend/app/llm/prompts/**
+      - backend/app/services/triage*
+      - backend/app/services/guardrails.py
+      - backend/evals/**
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Triage eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+      - name: Run eval
+        # Secrets are not passed to pull requests from forks; skip rather than fail there.
+        if: env.GROQ_API_KEY != ''
+        run: uv run python -m app.evals.run --write --delay 1
+      - name: Upload report
+        if: always() && env.GROQ_API_KEY != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: eval-results
+          path: docs/eval-results.md

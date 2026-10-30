@@ -213,14 +213,16 @@ class Factory:
         category: Category | None = None,
         severity: Severity | None = None,
         title: str | None = None,
+        description: str = "Something is not working as expected today.",
+        triage_status: TriageStatus = TriageStatus.DONE,
         **fields: object,
     ) -> Ticket:
         ticket = Ticket(
             title=title or f"Ticket number {self._next()}",
-            description="Something is not working as expected today.",
+            description=description,
             requester_id=requester.id,
             status=status,
-            triage_status=TriageStatus.DONE,
+            triage_status=triage_status,
             department_id=department.id if department else None,
             assignee_id=assignee.id if assignee else None,
             category=category,
