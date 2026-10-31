@@ -22,8 +22,12 @@ Plain code in `app/services/guardrails.py` then decides:
   has not reopened an automatic answer in the last 24 hours. DATABASE, INFRASTRUCTURE and
   BUG are never auto-resolved, whatever the database says.
 
-The prompt also limits self-serve answers to generic steps and forbids invented
-company-specific facts, because there is no knowledge base yet (that is v2, RAG).
+The prompt also limits self-serve answers to "how do I…" questions with generic steps, and
+forbids invented company-specific facts, because there is no knowledge base yet (that is v2,
+RAG). For the same reason HR_POLICY and PAYROLL are switched off in the category map
+(`auto_resolve_allowed = false`): eval run `triage_v4` showed the model answering "update my
+address" and "where is my salary statement" with plausible but invented portal steps. They
+go back on when the knowledge base can ground those answers.
 
 ## Consequences
 

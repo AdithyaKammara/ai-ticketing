@@ -88,6 +88,8 @@ class Route:
     severity_floor: Severity | None = None
 
 
+# HR and Payroll answers depend on company facts (portals, dates, amounts) the model can't
+# know without a knowledge base, so they always go to a person until v2 adds one.
 ROUTES: dict[Category, Route] = {
     Category.ACCESS: Route("it", ("active-directory", "sso", "vpn"), True),
     Category.BILLING: Route("finance", ("invoicing",), False),
@@ -95,11 +97,11 @@ ROUTES: dict[Category, Route] = {
     Category.DATABASE: Route("engineering", ("postgresql", "mysql"), False, Severity.HIGH),
     Category.FEATURE_REQUEST: Route("product", ("roadmap", "ux"), False),
     Category.HARDWARE: Route("it", ("laptops", "printers"), True),
-    Category.HR_POLICY: Route("hr", ("leave-policy", "benefits"), True),
+    Category.HR_POLICY: Route("hr", ("leave-policy", "benefits"), False),
     Category.INFRASTRUCTURE: Route(
         "devops", ("kubernetes", "aws", "terraform"), False, Severity.HIGH
     ),
-    Category.PAYROLL: Route("finance", ("payroll",), True),
+    Category.PAYROLL: Route("finance", ("payroll",), False),
     Category.OTHER: Route("it", (), True),
 }
 

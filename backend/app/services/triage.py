@@ -28,7 +28,7 @@ from app.db.enums import (
 )
 from app.db.models import AiTriageLog, CategoryRoute, Ticket, TicketEvent, User
 from app.llm.base import LLMProvider
-from app.llm.prompts.triage_v3 import RouteInfo
+from app.llm.prompts.triage_v4 import RouteInfo
 from app.services import guardrails, routing, sla, ticket_service
 from app.services.guardrails import Decision, GuardrailInput
 from app.services.skills import normalize_skills

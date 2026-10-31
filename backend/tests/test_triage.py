@@ -166,7 +166,7 @@ async def test_valid_answer_routes_to_best_agent_with_sla(
     assert ticket.ai_confidence == 88
     assert ticket.resolve_due_at == ticket.created_at + timedelta(days=3)
     log = await only_log(db, ticket.id)
-    assert log.prompt_version == "triage_v3"
+    assert log.prompt_version == "triage_v4"
     assert log.guardrail_decision == "ROUTE"
     assert log.input_tokens == 900
     assert log.parsed is not None
@@ -524,7 +524,7 @@ async def test_old_triage_logs_are_purged(
                 ticket_id=ticket.id,
                 provider="fake",
                 model="fake",
-                prompt_version="triage_v3",
+                prompt_version="triage_v4",
                 created_at=created,
                 updated_at=created,
             )

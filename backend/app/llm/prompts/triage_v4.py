@@ -1,4 +1,4 @@
-"""Triage prompt, version 3.
+"""Triage prompt, version 4.
 
 The model classifies and drafts; deterministic code decides (see services/guardrails.py).
 The category list and department map come from the database, so the prompt and the
@@ -13,20 +13,23 @@ from dataclasses import dataclass
 from app.db.enums import Category
 from app.llm.base import ChatMessage
 
-PROMPT_VERSION = "triage_v3"
+PROMPT_VERSION = "triage_v4"
 MAX_OUTPUT_TOKENS = 600
 
 CATEGORY_GUIDE: dict[Category, str] = {
     Category.ACCESS: "accounts, passwords, MFA, SSO, VPN, permissions to systems or drives",
     Category.BILLING: "vendor invoices, customer billing, expense reports, reimbursements",
     Category.BUG: "an internal or customer-facing application behaves incorrectly or errors",
-    Category.DATABASE: "database errors, slow or failing queries, replicas, backups, data fixes",
+    Category.DATABASE: "database errors, slow or failing queries, replicas, backups, data fixes, "
+    "and database users or permissions",
     Category.FEATURE_REQUEST: "a request for new functionality or a change to how a tool works",
-    Category.HARDWARE: "laptops, monitors, printers, phones, peripherals, physical equipment",
-    Category.HR_POLICY: "leave, benefits, contracts, onboarding, workplace and HR policies",
+    Category.HARDWARE: "IT equipment only: laptops, monitors, printers, phones, docks, headsets",
+    Category.HR_POLICY: "leave, benefits other than pensions, contracts, onboarding, HR policies",
     Category.INFRASTRUCTURE: "servers, clusters, networks, cloud resources, CI/CD, outages",
-    Category.PAYROLL: "salary, payslips, overtime pay, tax deductions, pay dates",
-    Category.OTHER: "anything that fits none of the above, or is too vague to classify",
+    Category.PAYROLL: "salary, payslips, overtime pay and rates, pension contributions, tax and "
+    "other deductions, pay dates",
+    Category.OTHER: "office facilities (kitchen, plants, parking, lost property), anything that "
+    "fits none of the above, or is too vague to classify",
 }
 
 
@@ -60,9 +63,12 @@ SEVERITY
 - LOW: questions, requests, cosmetic issues, anything that can wait days.
 
 SELF-SERVICE
-Set "can_self_serve" to true only when the requester can fix the problem alone by following
-generic steps that are true at any company (for example: use the self-service password
-reset, restart the VPN client, clear the browser cache). Then write those steps in
+Set "can_self_serve" to true only when the requester is asking HOW to do something, or the
+fix is a setting they control, and generic steps that are true at any company fully answer
+it (for example: use the self-service password reset, restart the VPN client, pick the right
+microphone in a call app). If something is broken, failing, damaged, not charging, not
+powering on, jammed, or behaving worse than it should, a person must look at it: set
+"can_self_serve" to false, even when generic troubleshooting steps exist. Then write those steps in
 "draft_response": plain language, at most five short sentences, addressed to the requester.
 Never invent company-specific facts such as policy terms, numbers of days, dates, amounts,
 names, phone numbers, or links. If the right answer depends on such facts, on someone's

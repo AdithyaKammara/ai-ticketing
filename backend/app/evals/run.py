@@ -18,15 +18,19 @@ from pathlib import Path
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from tenacity import wait_exponential
 
 from app.db.enums import Category, Severity
 from app.llm.base import LLMProvider
 from app.llm.groq_provider import DEFAULT_MODEL, GroqProvider
-from app.llm.prompts.triage_v3 import RouteInfo
+from app.llm.prompts.triage_v4 import RouteInfo
 from app.seed import DEPARTMENTS, ROUTES
 from app.services import guardrails
 from app.services.guardrails import Decision, GuardrailInput
 from app.services.triage_model import PROMPT_VERSION, run_triage_model
+
+EVAL_WAIT = wait_exponential(multiplier=2, min=5, max=60)
+EVAL_ATTEMPTS = 8
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 DATASET = BACKEND_DIR / "evals" / "dataset.jsonl"
@@ -199,7 +203,16 @@ def production_routes() -> list[RouteInfo]:
 
 
 async def predict(provider: LLMProvider, case: Case, min_confidence: int) -> Prediction:
-    outcome = await run_triage_model(provider, case.title, case.description, production_routes())
+    outcome = await run_triage_model(
+        provider,
+        case.title,
+        case.description,
+        production_routes(),
+        # The eval fires 100+ calls back to back; free-tier token-per-minute limits need
+        # patient retries, or rate limits get scored as wrong answers.
+        wait=EVAL_WAIT,
+        attempts=EVAL_ATTEMPTS,
+    )
     result = outcome.result
     if result is None:
         return Prediction(case, None, None, None, False, None, outcome.latency_ms, outcome.error)
