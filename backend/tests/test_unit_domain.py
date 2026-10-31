@@ -235,3 +235,23 @@ def test_invalid_cursor_is_rejected(bad: str) -> None:
         decode_cursor(bad, 3)
 
     assert exc_info.value.code == "INVALID_CURSOR"
+
+
+# ------------------------------------------------------------------ database URLs
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        ("postgresql://u:p@localhost:5432/db", "postgresql+asyncpg://u:p@localhost:5432/db"),
+        ("postgres://u:p@h/db", "postgresql+asyncpg://u:p@h/db"),
+        (
+            "postgresql://u:p@ep-x.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+            "postgresql+asyncpg://u:p@ep-x.aws.neon.tech/neondb?ssl=require",
+        ),
+    ],
+)
+def test_database_url_is_translated_for_asyncpg(given: str, expected: str) -> None:
+    from app.db.session import async_database_url
+
+    assert async_database_url(given) == expected

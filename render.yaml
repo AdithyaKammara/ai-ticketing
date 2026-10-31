@@ -1,0 +1,39 @@
+# Render Blueprint: Dashboard > New > Blueprint > pick this repo.
+# You'll be asked for DATABASE_URL (Neon) and GROQ_API_KEY; everything else is set here.
+services:
+  - type: web
+    name: ai-ticketing-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerCommand: sh start-render.sh
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: ai-ticketing-redis
+          property: connectionString
+      # Public demo: only the seeded accounts can sign in (PRD risk table).
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: LLM_DAILY_BUDGET
+        value: "200"
+
+  - type: keyvalue
+    name: ai-ticketing-redis
+    plan: free
+    region: oregon
+    ipAllowList: [] # private network only
+    maxmemoryPolicy: noeviction # never drop queued triage jobs

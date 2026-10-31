@@ -98,6 +98,22 @@ cd backend && uv run python -m app.evals.run --write
 Targets: at least 90% category and department accuracy, and zero unsafe auto-resolutions.
 Results go to `docs/eval-results.md`. The first real run is still pending.
 
+## Deploy (free tiers)
+
+| Piece | Host | Notes |
+| --- | --- | --- |
+| Web app | Vercel | Static Vite build; `frontend/vercel.json` proxies `/api` to Render, so cookies stay same-origin |
+| API + triage worker | Render (free web service, Docker) | `backend/start-render.sh` runs migrations, the demo seed (no-op once seeded), the worker, and the API in one container |
+| Redis | Render Key Value (free) | Private network, no command quota (ARQ polls Redis constantly, which would exhaust Upstash's free quota) |
+| Postgres | Neon (free) | Persistent; Render's free Postgres expires after 30 days |
+
+1. **Neon:** create a project in AWS US West (Oregon), then copy the connection string (the direct one, not "pooled").
+2. **Render:** sign in with GitHub, then New > **Blueprint** > this repo. Paste the Neon string as `DATABASE_URL` and your Groq key as `GROQ_API_KEY`. `render.yaml` creates the rest.
+3. **Vercel:** sign in with GitHub, then **Add New Project** > this repo, with **Root Directory** `frontend`. If Render named the API anything other than `ai-ticketing-api`, update the URL in `frontend/vercel.json` first.
+
+Free Render services sleep after 15 minutes idle; the first request after that takes about a minute.
+Registration is off on the live demo (`ALLOW_REGISTRATION=false`); use the demo accounts.
+
 ## Repository layout
 
 ```
