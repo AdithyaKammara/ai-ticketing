@@ -153,3 +153,21 @@ async def test_bad_date_range_is_rejected(client: AsyncClient, admin: User) -> N
 
     assert r.status_code == 400
     assert r.json()["error"]["code"] == "INVALID_RANGE"
+
+
+async def test_date_range_is_capped(client: AsyncClient, admin: User) -> None:
+    r = await client.get(
+        "/api/v1/analytics/volume?from=0001-01-01&to=2026-10-31", headers=auth(admin)
+    )
+
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "INVALID_RANGE"
+
+
+async def test_agent_without_department_sees_no_tickets(client: AsyncClient, make: Factory) -> None:
+    loner = await make.user(Role.AGENT)  # no department
+    await make.ticket(await make.user(Role.REQUESTER), status=TicketStatus.NEW)
+
+    body = (await client.get("/api/v1/analytics/summary", headers=auth(loner))).json()
+
+    assert body["open_tickets"] == 0

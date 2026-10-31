@@ -7,7 +7,7 @@ bounds each query on the relevant timestamp.
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import ColumnElement, and_, case, func, or_, select, true
+from sqlalchemy import ColumnElement, and_, case, false, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.clock import utcnow
@@ -24,6 +24,7 @@ from app.schemas.analytics import (
 )
 
 AUTO = TicketStatus.AUTO_RESOLVED
+MAX_RANGE_DAYS = 366
 OPEN_TICKET_STATUSES = tuple(s for s in TicketStatus if s not in DONE_STATUSES)
 
 
@@ -38,6 +39,9 @@ class DateRange:
         start = datetime.combine(frm, time.min) if frm else end - timedelta(days=30)
         if start > end:
             raise AppError(400, "INVALID_RANGE", "The 'from' date is after the 'to' date")
+        # The volume chart builds one row per day, so the range must stay bounded.
+        if end - start > timedelta(days=MAX_RANGE_DAYS):
+            raise AppError(400, "INVALID_RANGE", f"Pick a range of at most {MAX_RANGE_DAYS} days")
         return cls(start.replace(tzinfo=utcnow().tzinfo), end.replace(tzinfo=utcnow().tzinfo))
 
 
@@ -45,7 +49,8 @@ def scope(user: User) -> ColumnElement[bool]:
     if user.role is Role.ADMIN:
         return true()
     if user.department_id is None:
-        return Ticket.department_id.is_(None)
+        # Fail closed: staff without a department see no department's numbers.
+        return false()
     return Ticket.department_id == user.department_id
 
 
