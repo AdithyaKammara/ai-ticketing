@@ -100,7 +100,7 @@ jobs:
       - name: Python dependency audit
         working-directory: backend
         run: |
-          uv export --locked --no-dev --no-hashes --no-emit-project -o "$RUNNER_TEMP/requirements.txt"
+          uv export --locked --no-dev --no-emit-project -o "$RUNNER_TEMP/requirements.txt"
           uvx pip-audit --requirement "$RUNNER_TEMP/requirements.txt" --disable-pip
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
