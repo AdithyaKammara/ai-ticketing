@@ -11,7 +11,7 @@ Internal support tickets, triaged by an LLM in seconds and routed to the right a
 | Web      | React 19, TypeScript 5 (strict), Vite 7, Tailwind CSS v4      |
 | API      | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0 async       |
 | Data     | PostgreSQL 16 (Alembic migrations), Redis 7 + ARQ job queue   |
-| AI       | Groq `llama-3.3-70b-versatile` behind an `LLMProvider` interface |
+| AI       | Groq `openai/gpt-oss-120b` behind an `LLMProvider` interface    |
 | Tooling  | uv, ruff, mypy, pytest; pnpm, ESLint, Prettier, Vitest; gitleaks |
 
 ## Quick start

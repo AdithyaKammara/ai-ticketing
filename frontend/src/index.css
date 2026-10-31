@@ -1,7 +1,19 @@
 @import 'tailwindcss';
 
 /* Theme tokens: every colour comes from here, so dark mode can never leave text invisible. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+/* `dark:` utilities follow the same rule as the colour tokens below: the explicit toggle,
+   or the OS setting unless the user picked light. Without the media branch, dark: classes
+   never applied in OS dark mode and left light-on-light text (the v1 bug). */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
 
 :root {
   color-scheme: light;

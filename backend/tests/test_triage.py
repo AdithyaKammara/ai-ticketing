@@ -176,6 +176,12 @@ async def test_valid_answer_routes_to_best_agent_with_sla(
     )
     assert EventType.TRIAGED in types
     assert EventType.ASSIGNED in types
+    assigned_to = await db.scalar(
+        select(TicketEvent.to_value).where(
+            TicketEvent.ticket_id == ticket.id, TicketEvent.type == EventType.ASSIGNED
+        )
+    )
+    assert assigned_to == "Dev"
 
 
 async def test_department_comes_from_the_map_not_the_model(

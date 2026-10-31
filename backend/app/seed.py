@@ -535,7 +535,13 @@ async def _seed_ticket(
     )
     ticket.assignee_id = assignee_id
     if assignee_id is not None:
-        event(EventType.ASSIGNED, triaged_at, body="Routed automatically")
+        assignee = await session.get(User, assignee_id)
+        event(
+            EventType.ASSIGNED,
+            triaged_at,
+            to_value=assignee.full_name if assignee else None,
+            body="Routed automatically",
+        )
 
     if status is TicketStatus.NEW:
         return

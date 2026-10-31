@@ -7,7 +7,8 @@ from groq.types.chat.completion_create_params import ResponseFormatResponseForma
 
 from app.llm.base import ChatMessage, LLMError, LLMResponse, LLMTransientError
 
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+# Groq retired llama-3.3-70b-versatile; gpt-oss-120b is the current general-purpose model.
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 TIMEOUT_SECONDS = 15.0
 
 

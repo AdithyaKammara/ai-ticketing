@@ -26,7 +26,7 @@ from app.db.enums import (
     TicketStatus,
     TriageStatus,
 )
-from app.db.models import AiTriageLog, CategoryRoute, Ticket, TicketEvent
+from app.db.models import AiTriageLog, CategoryRoute, Ticket, TicketEvent, User
 from app.llm.base import LLMProvider
 from app.llm.prompts.triage_v3 import RouteInfo
 from app.services import guardrails, routing, sla, ticket_service
@@ -183,8 +183,14 @@ async def triage_ticket(session: AsyncSession, ticket_id: UUID, deps: TriageDeps
         assignee_id = await routing.choose_assignee(session, route.department_id, wanted)
         if assignee_id is not None:
             ticket.assignee_id = assignee_id
+            assignee = await session.get(User, assignee_id)
             ticket_service.add_event(
-                session, ticket, EventType.ASSIGNED, None, body="Routed automatically"
+                session,
+                ticket,
+                EventType.ASSIGNED,
+                None,
+                to_value=assignee.full_name if assignee else None,
+                body="Routed automatically",
             )
         run = TriageRun.ROUTED
 

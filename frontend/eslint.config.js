@@ -25,5 +25,16 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // `onClick={() => mutate()}` is idiomatic React; the void return is harmless there.
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+  {
+    // Entry points and generated types, not hot-reloaded component modules.
+    files: ['src/main.tsx', 'src/app/router.tsx', 'src/lib/api/schema.d.ts'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Only the worker calls the LLM, so the API can start without a key; the worker cannot.
     groq_api_key: SecretStr | None = None
-    llm_model: str = "llama-3.3-70b-versatile"
+    llm_model: str = "openai/gpt-oss-120b"
     auto_resolve_min_confidence: int = Field(default=85, ge=0, le=100)
     # Model calls per UTC day across all users; past it, tickets skip AI and go to a person.
     llm_daily_budget: int = Field(default=500, ge=0)
