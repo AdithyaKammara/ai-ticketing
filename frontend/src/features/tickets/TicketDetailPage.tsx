@@ -32,7 +32,7 @@ export default function TicketDetailPage() {
   const { id = '' } = useParams()
   const user = useMe()
   const ticket = useTicket(id)
-  const events = useEvents(id)
+  const events = useEvents(id, ticket.data?.updated_at)
 
   if (ticket.isPending) return <Spinner label="Loading ticket" />
   if (ticket.isError)

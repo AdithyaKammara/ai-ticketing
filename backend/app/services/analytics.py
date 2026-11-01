@@ -201,7 +201,11 @@ async def breakdown(
         )
     ).all()
     return [
-        BreakdownBucket(key=value.value, label=value.value.replace("_", " ").title(), count=count)
+        BreakdownBucket(
+            key=value.value,
+            label=value.value.replace("_", " ").title().replace("Hr ", "HR "),
+            count=count,
+        )
         for value, count in enum_rows
         if value is not None  # the SQL filters None; this satisfies the type checker
     ]

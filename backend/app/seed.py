@@ -473,7 +473,7 @@ async def _seed_ticket(
     departments: dict[str, Department],
 ) -> None:
     route = ROUTES[sample.category]
-    auto = sample.auto_response is not None
+    auto = sample.auto_response is not None and route.auto_resolve_allowed
     status = TicketStatus.AUTO_RESOLVED if auto else STATUS_CYCLE[index % len(STATUS_CYCLE)]
     first_due, resolve_due = sla.due_times(sample.severity, created)
 

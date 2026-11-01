@@ -77,7 +77,7 @@ export function titleCase(value: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export const CATEGORY_LABEL = (c: Category): string => titleCase(c)
+export const CATEGORY_LABEL = (c: Category): string => titleCase(c).replace('Hr ', 'HR ')
 
 export const STATUSES = Object.keys(STATUS_META) as TicketStatus[]
 // Finished tickets have no SLA left to count down.

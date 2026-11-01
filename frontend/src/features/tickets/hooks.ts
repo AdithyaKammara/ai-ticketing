@@ -33,8 +33,13 @@ export function useTicket(id: string) {
   })
 }
 
-export function useEvents(id: string) {
-  return useQuery({ queryKey: ticketKeys.events(id), queryFn: () => ticketApi.getEvents(id) })
+/** `version` (the ticket's updated_at) refetches the timeline when triage or anyone else
+changes the ticket, without polling it separately. */
+export function useEvents(id: string, version?: string) {
+  return useQuery({
+    queryKey: [...ticketKeys.events(id), version],
+    queryFn: () => ticketApi.getEvents(id),
+  })
 }
 
 export function useReference() {
