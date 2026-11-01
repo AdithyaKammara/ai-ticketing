@@ -148,7 +148,7 @@ run (prompt v3) scored 72% with 3 unsafe answers; the fixes are in commit histor
 | Redis | Render Key Value (free) | Private network, no command quota (ARQ polls Redis constantly, which would exhaust Upstash's free quota) |
 | Postgres | Neon (free) | Persistent; Render's free Postgres expires after 30 days |
 
-1. **Neon:** create a project in AWS US West (Oregon), then copy the connection string (the direct one, not "pooled").
+1. **Neon:** create a project (Render is set to Ohio, so AWS US East 2 is closest), then copy the connection string (the direct one, not "pooled").
 2. **Render:** sign in with GitHub, then New > **Blueprint** > this repo. Paste the Neon string as `DATABASE_URL` and your Groq key as `GROQ_API_KEY`. `render.yaml` creates the rest.
 3. **Vercel:** sign in with GitHub, then **Add New Project** > this repo, with **Root Directory** `frontend`. If Render named the API anything other than `ai-ticketing-api`, update the URL in `frontend/vercel.json` first.
 

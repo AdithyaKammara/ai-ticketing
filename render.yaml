@@ -5,7 +5,7 @@ services:
     name: ai-ticketing-api
     runtime: docker
     plan: free
-    region: oregon
+    region: ohio
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     dockerCommand: sh start-render.sh
@@ -34,6 +34,6 @@ services:
   - type: keyvalue
     name: ai-ticketing-redis
     plan: free
-    region: oregon
+    region: ohio
     ipAllowList: [] # private network only
     maxmemoryPolicy: noeviction # never drop queued triage jobs
