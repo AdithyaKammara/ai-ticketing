@@ -2,7 +2,20 @@
 
 Internal support tickets, triaged by an LLM in seconds and routed to the right agent, with deterministic guardrails deciding what the model may auto-resolve.
 
-> **Status: rebuild in progress (v2).** M0 (foundations), M1 (backend core) and M2 (AI triage) are built; the frontend (M3) is next. See [the PRD](docs/PRD.pdf) for the full specification and the [milestone notes](docs/milestones/).
+[![CI](https://github.com/AdithyaKammara/ai-ticketing/actions/workflows/ci.yml/badge.svg)](https://github.com/AdithyaKammara/ai-ticketing/actions/workflows/ci.yml)
+
+**AI triage on 116 labeled tickets: 97.4% category accuracy, 97.4% routing accuracy, 0 unsafe
+auto-answers, 10/10 prompt-injection attempts handled.** Backend: 217 tests, 97% coverage.
+
+![Admin dashboard](docs/screenshots/dashboard.png)
+
+| Ticket detail with AI triage | Agent queue |
+| --- | --- |
+| ![Ticket detail](docs/screenshots/ticket.png) | ![Queue](docs/screenshots/queue.png) |
+
+Built from [the PRD](docs/PRD.pdf); see the [milestone notes](docs/milestones/) and
+[architecture decisions](docs/adr/). This is v2, a ground-up rebuild; the original prototype
+is on the [`v1` branch](https://github.com/AdithyaKammara/ai-ticketing/tree/v1).
 
 ## Stack
 
@@ -74,6 +87,16 @@ pnpm test
 pnpm build
 ```
 
+End-to-end: the three golden paths from the PRD (requester submits and rates an answer, agent
+resolves a ticket, admin deactivates an agent) plus an axe WCAG 2.1 AA scan on every page they
+visit. They run against the compose stack without the AI worker, so they need no API key:
+
+```bash
+docker compose up -d --build postgres redis migrate api web
+docker compose run --rm api python -m app.seed --reset
+cd frontend && pnpm exec playwright install chromium && pnpm e2e
+```
+
 ## How triage works
 
 The API saves each ticket as `TRIAGING` and queues a job. The worker asks the model for a
@@ -95,8 +118,26 @@ attempts and 10 vague tickets. To run them against the real model:
 cd backend && uv run python -m app.evals.run --write
 ```
 
-Targets: at least 90% category and department accuracy, and zero unsafe auto-resolutions.
-Results go to `docs/eval-results.md`. The first real run is still pending.
+| Metric (prompt `triage_v4`, `openai/gpt-oss-120b`, 116 tickets) | Result | Target |
+| --- | --- | --- |
+| Category accuracy | 97.4% | >= 90% |
+| Department routing accuracy | 97.4% | >= 90% |
+| Unsafe auto-resolutions | 0 | 0 |
+| Prompt-injection tickets classified correctly | 10/10 | |
+| Vague tickets classified correctly | 10/10 | |
+
+Full report with the confusion matrix: [docs/eval-results.md](docs/eval-results.md). The first
+run (prompt v3) scored 72% with 3 unsafe answers; the fixes are in commit history and
+[ADR 2](docs/adr/0002-guardrails-decide-not-the-model.md). It runs nightly in CI once the
+`GROQ_API_KEY` repository secret is set.
+
+### Known limitations
+
+- HR and Payroll questions are never auto-answered until a knowledge base (v2) can ground them.
+- On Groq's free tier, triage latency p95 is about 19 s (target 10 s) because of rate-limit
+  backoff; a paid tier meets the target.
+- No password change or keyboard shortcuts yet; no email notifications (v2 in the PRD).
+- On Render's free tier the worker runs inside the API container without supervision.
 
 ## Deploy (free tiers)
 
@@ -118,8 +159,8 @@ Registration is off on the live demo (`ALLOW_REGISTRATION=false`); use the demo 
 
 ```
 backend/    FastAPI service: app/{api,core,db,schemas,services,llm,workers,evals}, tests/
-frontend/   React + Vite single-page app
-docs/       PRD, milestone notes, ADRs
+frontend/   React + Vite single-page app; e2e/ holds the Playwright specs
+docs/       PRD, milestone notes, ADRs, eval results, screenshots
 .github/    CI workflows
 ```
 

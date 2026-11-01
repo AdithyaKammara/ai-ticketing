@@ -108,3 +108,45 @@ jobs:
       - name: JavaScript dependency audit
         working-directory: frontend
         run: pnpm audit --prod
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Configure the stack
+        run: |
+          cp .env.example .env
+          sed -i "s/^JWT_SECRET=$/JWT_SECRET=$(openssl rand -hex 32)/" .env
+      - name: Start the stack (no AI worker, so runs are deterministic and key-free)
+        run: |
+          docker compose up -d --build postgres redis migrate api web
+          for i in $(seq 1 60); do curl -sf localhost:8080/api/v1/ready && break; sleep 2; done
+          docker compose run --rm api python -m app.seed --reset
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Golden paths + accessibility
+        working-directory: frontend
+        run: pnpm e2e
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 14
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 api web
